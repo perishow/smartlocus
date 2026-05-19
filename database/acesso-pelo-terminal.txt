@@ -1,0 +1,1 @@
+docker exec -it smartlocus-mariadb-1 mariadb -u root -psenha
