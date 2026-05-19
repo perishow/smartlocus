@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  mariadb:
+    image: mariadb:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: smartlocus 
+    ports:
+      - "3306:3306"
+    volumes:
+      # Mapeia o seu arquivo SQL para a pasta de inicialização do MariaDB
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      # Volume para manter os dados salvos mesmo se o container cair
+      - mariadb_data:/var/lib/mysql
+
+volumes:
+  mariadb_data:

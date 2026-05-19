@@ -1,17 +1,21 @@
 use sqlx::mysql::MySqlPoolOptions;
 use tokio::net::TcpListener;
 use axum::Router;
+use std::env;
 
 mod produtos;
 mod usuarios;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let database_url = "mysql://root:senha@localhost:3306/smartlocus";
+    dotenvy::dotenv().ok();
+
+    //let database_url = "mysql://root:senha@localhost:3306/smartlocus";
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL não configurada");
 
     let pool = MySqlPoolOptions::new()
         .max_connections(5)
-        .connect(database_url)
+        .connect(&database_url)
         .await?;
 
     println!("Conexão com o MariaDB estabelecida com sucesso!");
