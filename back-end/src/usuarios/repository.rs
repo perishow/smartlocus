@@ -1,13 +1,13 @@
-use sqlx::{MySqlPool, FromRow, Type};
+use sqlx::{MySqlPool, FromRow};
 use serde::Serialize;
 
 #[derive(Debug, FromRow, Serialize)]
 pub struct Usuario {
-    id: i32,
-    nome: String,
-    email: String,
-    senha: String,
-    perfil: String,
+    pub id: i32,
+    pub nome: String,
+    pub email: String,
+    pub senha: String,
+    pub perfil: String,
 }
 
 #[derive(Clone)]
@@ -35,6 +35,15 @@ impl UsuariosRepository {
         // Usamos query_as para mapear o resultado diretamente para a struct Usuario
         let usuario = sqlx::query_as::<_, Usuario>("SELECT * FROM Usuarios WHERE id = ?")
             .bind(id)
+            .fetch_optional(&self.pool)
+            .await?;
+
+        Ok(usuario)
+    }
+
+    pub async fn get_usuario_by_nome(&self, nome: String) -> Result<Option<Usuario>, sqlx::Error> {
+        let usuario = sqlx::query_as::<_, Usuario>("SELECT * FROM Usuarios WHERE nome = ?")
+            .bind(nome)
             .fetch_optional(&self.pool)
             .await?;
 
