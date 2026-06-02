@@ -1,10 +1,11 @@
-use sqlx::mysql::MySqlPoolOptions;
-use tokio::net::TcpListener;
 use axum::Router;
+use sqlx::mysql::MySqlPoolOptions;
 use std::env;
 use std::process::Command;
+use tokio::net::TcpListener;
 
-mod produtos;
+mod autenticacao;
+mod repositorios;
 mod usuarios;
 
 #[tokio::main]
@@ -22,7 +23,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .expect("Falha crítica: O executável do Docker não foi encontrado no sistema.");
 
     if !docker_status.success() {
-        eprintln!("⚠️ Aviso: Houve um problema ao executar o docker compose. O banco pode não estar disponível.");
+        eprintln!(
+            "⚠️ Aviso: Houve um problema ao executar o docker compose. O banco pode não estar disponível."
+        );
     }
 
     dotenvy::dotenv().ok();
@@ -34,11 +37,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     for i in 1..=max_tentativas {
         println!("Tentativa {} de conectar ao MariaDB...", i);
-        
+
         match MySqlPoolOptions::new()
             .max_connections(5)
             .connect(&database_url)
-            .await 
+            .await
         {
             Ok(p) => {
                 pool = Some(p);
@@ -46,7 +49,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 break; // Deu certo, saímos do loop!
             }
             Err(e) => {
-                eprintln!("⏳ Banco ainda não está pronto: {}. Aguardando 3 segundos...", e);
+                eprintln!(
+                    "⏳ Banco ainda não está pronto: {}. Aguardando 3 segundos...",
+                    e
+                );
                 if i < max_tentativas {
                     tokio::time::sleep(std::time::Duration::from_secs(3)).await;
                 }
@@ -55,12 +61,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // 3. Verifica se conseguimos o "pool" após as tentativas
-    let pool = pool.expect("❌ Não foi possível conectar ao banco de dados após várias tentativas. Abortando...");
+    let pool = pool.expect(
+        "❌ Não foi possível conectar ao banco de dados após várias tentativas. Abortando...",
+    );
 
     // 4. Juntamos as rotas e subimos o servidor
-    let app = Router::new()
-        .nest("/api/v1/produtos", produtos::routes::router(pool.clone()))
-        .nest("/api/v1/usuarios", usuarios::routes::router(pool.clone()));
+    let app = Router::new().nest("/api/v1", autenticacao::routes::router(pool.clone()));
 
     let listener = TcpListener::bind("0.0.0.0:3000").await?;
     println!("🚀 Servidor rodando em http://localhost:3000");

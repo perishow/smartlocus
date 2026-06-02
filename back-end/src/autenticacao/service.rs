@@ -1,31 +1,12 @@
 use crate::repositorios::usuarios_repository::{Usuario, UsuariosRepository};
 use sqlx::MySqlPool;
 
-pub struct UsuariosService {
+pub struct AuthService {
     pool: MySqlPool,
 }
-
-impl UsuariosService {
+impl AuthService {
     pub fn new(pool: MySqlPool) -> Self {
         Self { pool }
-    }
-
-    pub async fn listar_usuarios(&self) -> Result<Vec<Usuario>, sqlx::Error> {
-        let repository = UsuariosRepository::new(self.pool.clone());
-
-        let usuarios = repository.get_usuarios().await?;
-
-        Ok(usuarios)
-    }
-
-    pub async fn coletar_usuario_por_id(&self, id: i32) -> Result<Usuario, sqlx::Error> {
-        let repository = UsuariosRepository::new(self.pool.clone());
-        let resultado_query: Option<Usuario> = repository.get_usuario_by_id(id).await?;
-
-        match resultado_query {
-            Some(usuario) => Ok(usuario),
-            None => Err(sqlx::Error::RowNotFound),
-        }
     }
 
     pub async fn validar_usuario_e_senha(
@@ -48,5 +29,25 @@ impl UsuariosService {
         } else {
             Err("Usuario ou senha incorretos".to_string())
         }
+    }
+
+    pub async fn registrar_usuario(
+        &self,
+        nome: String,
+        email: String,
+        senha: String,
+        perfil: String,
+    ) -> Result<u64, String> {
+        println!("Requisição de cadastro recebida!");
+
+        let repository = UsuariosRepository::new(self.pool.clone());
+        let id_usuario = repository
+            .insert_usuario(&nome, &email, &senha, &perfil)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        println!("Cadastro concluído, id do usuário: {}", id_usuario);
+
+        return Ok(id_usuario);
     }
 }
