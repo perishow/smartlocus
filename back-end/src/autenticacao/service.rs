@@ -45,9 +45,7 @@ impl AuthService {
             .insert_usuario(&nome, &email, &senha, &perfil)
             .await
             .map_err(|e| e.to_string())?;
-
         println!("Cadastro concluído, id do usuário: {}", id_usuario);
-
-        return Ok(id_usuario);
+        Ok(id_usuario)
     }
 }

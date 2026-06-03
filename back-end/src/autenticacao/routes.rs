@@ -7,13 +7,7 @@ use axum::{
     routing::{get, post},
 };
 use serde::Deserialize;
-use sqlx::MySqlPool;
-
-#[derive(Deserialize)]
-struct LoginRequest {
-    nome: String,
-    senha: String,
-}
+use sqlx::{MySqlPool, pool};
 
 #[derive(Deserialize)]
 struct RegisterRequest {
@@ -22,6 +16,39 @@ struct RegisterRequest {
     senha: String,
     perfil: String,
 }
+
+#[derive(Deserialize)]
+struct DeleteRequest {
+    id: u64,
+}
+
+#[derive(Deserialize)]
+struct LoginRequest {
+    nome: String,
+    senha: String,
+}
+
+async fn register_handler(
+    State(pool): State<MySqlPool>,
+    Json(payload): Json<RegisterRequest>,
+) -> Result<Json<u64>, (StatusCode, String)> {
+    let auth_service = AuthService::new(pool);
+    let result = auth_service
+        .registrar_usuario(payload.nome, payload.email, payload.senha, payload.perfil)
+        .await;
+    match result {
+        Ok(id) => Ok(Json(id)),
+        Err(mensagem) => Err((StatusCode::INTERNAL_SERVER_ERROR, mensagem)),
+    }
+}
+
+// async fn delete_user(
+//     State(pool): State<MySqlPool>,
+//     Json(payload): Json<DeleteRequest>,
+// ) -> Result<Json<u64>, (StatusCode, String)> {
+//     let auth_service = AuthService::new(pool);
+//     let result =
+// }
 
 async fn login_handler(
     State(pool): State<MySqlPool>,
@@ -47,5 +74,6 @@ async fn login_handler(
 pub fn router(pool: MySqlPool) -> Router {
     Router::new()
         .route("/login", post(login_handler))
+        .route("/register", post(register_handler))
         .with_state(pool)
 }
