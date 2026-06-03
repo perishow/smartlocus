@@ -133,7 +133,7 @@ CREATE TABLE `Usuarios` (
   `nome` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
   `senha` varchar(255) NOT NULL,
-  `perfil` enum('Gestor','Tecnico','Docente','Estudante') NOT NULL,
+  `perfil` enum('Consultor','Operador') NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
@@ -147,7 +147,7 @@ SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
 LOCK TABLES `Usuarios` WRITE;
 /*!40000 ALTER TABLE `Usuarios` DISABLE KEYS */;
 INSERT INTO `Usuarios` VALUES
-(1,'Peri de Lima','peri@smartlocus.com','123456','Tecnico');
+(1,'Peri de Lima','peri@smartlocus.com','123456','Operador');
 /*!40000 ALTER TABLE `Usuarios` ENABLE KEYS */;
 UNLOCK TABLES;
 COMMIT;
