@@ -5,6 +5,7 @@ use std::process::Command;
 use tokio::net::TcpListener;
 
 mod autenticacao;
+mod item;
 mod repositorios;
 mod usuarios;
 
@@ -66,7 +67,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     // 4. Juntamos as rotas e subimos o servidor
-    let app = Router::new().nest("/api/v1", autenticacao::routes::router(pool.clone()));
+    let app = Router::new()
+        .nest("/api/v1", autenticacao::routes::router(pool.clone()))
+        .nest("/api/v1", item::routes::router(pool.clone()));
 
     let listener = TcpListener::bind("0.0.0.0:3000").await?;
     println!("🚀 Servidor rodando em http://localhost:3000");

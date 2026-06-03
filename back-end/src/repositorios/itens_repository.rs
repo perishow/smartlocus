@@ -22,11 +22,11 @@ impl ItensRepository {
 
     pub async fn insert_item(
         &self,
-        nome: &str,
-        categoria: &str,
+        nome: String,
+        categoria: String,
         quantidade_atual: i32,
         quantidade_minima: i32,
-        localizacao: &str,
+        localizacao: String,
     ) -> Result<u64, sqlx::Error> {
         let result = sqlx::query(
             "INSERT INTO Itens (nome, categoria, quantidade_atual, quantidade_minima, localizacao) VALUES  (?, ?, ?, ?, ?)"
@@ -51,12 +51,33 @@ impl ItensRepository {
         Ok(result.rows_affected())
     }
 
-    pub async fn get_item_by_id(&self, id: i32) -> Result<Option<Item>, sqlx::Error> {
+    pub async fn get_item_by_id(&self, id: u64) -> Result<Option<Item>, sqlx::Error> {
         let item = sqlx::query_as::<_, Item>("SELECT * FROM Itens WHERE id = ?")
             .bind(id)
             .fetch_optional(&self.pool)
             .await?;
 
         Ok(item)
+    }
+
+    pub async fn get_item_id_by_nome(&self, nome: String) -> Result<Option<u64>, sqlx::Error> {
+        let id = sqlx::query_scalar("SELECT id FROM Itens WHERE nome = ?")
+            .bind(nome)
+            .fetch_optional(&self.pool)
+            .await?;
+        Ok(id)
+    }
+
+    pub async fn update_item_quantidade(
+        &self,
+        id: u64,
+        nova_quantidade: i32,
+    ) -> Result<u64, sqlx::Error> {
+        let resultado = sqlx::query("UPDATE Itens SET quantidade_atual = ? WHERE id = ?")
+            .bind(nova_quantidade)
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+        Ok(resultado.rows_affected())
     }
 }

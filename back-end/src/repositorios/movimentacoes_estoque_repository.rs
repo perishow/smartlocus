@@ -31,6 +31,37 @@ impl MovimentacaoEstoqueRepository {
         responsavel_id: i32
     ) -> Result<u64, sqlx::Error> {
         let resultado = sqlx::query(
-        )
+            "INSERT INTO Movimentacoes_Estoque (item_id, tipo, quantidade, data_movimentacao, observacao, responsavel_id) VALUES (?, ?, ?, ?, ?, ?)"
+        ) 
+        .bind(item_id)
+        .bind(tipo)
+        .bind(quantidade)
+        .bind(data_movimentacao)
+        .bind(observacao)
+        .bind(responsavel_id)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(resultado.last_insert_id())
+    }
+
+    pub async fn delete_movimentacao_estoque(
+        &self,
+        id: i32
+    ) -> Result<u64, sqlx::Error> {
+        let resultado = sqlx::query("DELETE FROM Movimentacoes_Estoque WHERE id = ?")
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+        
+        Ok(resultado.rows_affected())
+    }
+
+    pub async fn get_movimentacao_estoque(&self, id: i32) -> Result<Option<MovimentacaoEstoque>, sqlx::Error> {
+        let movimentacao = sqlx::query_as::<_, MovimentacaoEstoque>("SELECT * FROM Movimentacoes_Estoque WHERE id = ?")
+            .bind(id)
+            .fetch_optional(&self.pool)
+            .await?;
+        Ok(movimentacao)
     }
 }
