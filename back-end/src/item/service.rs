@@ -1,4 +1,7 @@
-use crate::repositorios::itens_repository::ItensRepository;
+use crate::repositorios::{
+    itens_repository::ItensRepository,
+    movimentacoes_estoque_repository::MovimentacaoEstoqueRepository,
+};
 use sqlx::MySqlPool;
 
 pub struct ItemService {
@@ -41,31 +44,35 @@ impl ItemService {
         Ok(id_item)
     }
 
-    pub async fn adicionar_quantidade_item(
-        &self,
-        id: i32,
-        quant_somar: i32,
-    ) -> Result<u64, String> {
-        if quant_somar < 0 {
-            return Err(format!(
-                "Erro: A quantidade a ser somada não pode ser negativa! quantidade inserida: {}",
-                quant_somar
-            ));
-        }
-        let repositorio = ItensRepository::new(self.pool.clone());
-        let item = repositorio.get(id).await.map_err(|e| e.to_string())?;
-
-        let quantidade_atual = match item {
-            Some(item) => item.quantidade_atual,
-            None => return Err(format!("Erro: Item com ID {} não foi encontrado", id)),
-        };
-        let nova_quantidade = quantidade_atual + quant_somar;
-        let result = repositorio
-            .update_quantidade(id, nova_quantidade)
-            .await
-            .map_err(|e| e.to_string())?;
-        Ok(result)
-    }
+    // pub async fn adicionar_quantidade_item(
+    //     &self,
+    //     id: i32,
+    //     quant_somar: i32,
+    // ) -> Result<u64, String> {
+    //     if quant_somar < 0 {
+    //         return Err(format!(
+    //             "Erro: A quantidade a ser somada não pode ser negativa! quantidade inserida: {}",
+    //             quant_somar
+    //         ));
+    //     }
+    //     let repositorio_item = ItensRepository::new(self.pool.clone());
+    //     let repositorio_movimentacoes = MovimentacaoEstoqueRepository::new(self.pool.clone());
+    //     let item = repositorio_item.get(id).await.map_err(|e| e.to_string())?;
+    //
+    //     let quantidade_atual = match item {
+    //         Some(item) => item.quantidade_atual,
+    //         None => return Err(format!("Erro: Item com ID {} não foi encontrado", id)),
+    //     };
+    //     let nova_quantidade = quantidade_atual + quant_somar;
+    //     let result = repositorio_item
+    //         .update_quantidade(id, nova_quantidade)
+    //         .await
+    //         .map_err(|e| e.to_string())?;
+    //     //registro da movimentação:
+    //     match repositorio_movimentacoes.insert_movimentacao_estoque(item_id, tipo, quantidade, data_movimentacao, observacao, responsavel_id)
+    //
+    //     Ok(result)
+    // }
 
     pub async fn subtrair_quantidade_item(
         &self,
