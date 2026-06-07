@@ -20,7 +20,7 @@ impl ItensRepository {
         Self { pool }
     }
 
-    pub async fn insert_item(
+    pub async fn insert(
         &self,
         nome: String,
         categoria: String,
@@ -42,7 +42,7 @@ impl ItensRepository {
         Ok(result.last_insert_id())
     }
 
-    pub async fn delete_item(&self, id: i32) -> Result<u64, sqlx::Error> {
+    pub async fn delete(&self, id: i32) -> Result<u64, sqlx::Error> {
         let result = sqlx::query("DELETE FROM Itens WHERE id = ?")
             .bind(id)
             .execute(&self.pool)
@@ -51,7 +51,7 @@ impl ItensRepository {
         Ok(result.rows_affected())
     }
 
-    pub async fn get_item_by_id(&self, id: u64) -> Result<Option<Item>, sqlx::Error> {
+    pub async fn get(&self, id: i32) -> Result<Option<Item>, sqlx::Error> {
         let item = sqlx::query_as::<_, Item>("SELECT * FROM Itens WHERE id = ?")
             .bind(id)
             .fetch_optional(&self.pool)
@@ -60,7 +60,14 @@ impl ItensRepository {
         Ok(item)
     }
 
-    pub async fn get_item_id_by_nome(&self, nome: String) -> Result<Option<u64>, sqlx::Error> {
+    pub async fn get_all(&self) -> Result<Vec<Item>, sqlx::Error> {
+        let item_vec = sqlx::query_as::<_, Item>("SELECT * FROM Itens")
+            .fetch_all(&self.pool)
+            .await?;
+        Ok(item_vec)
+    }
+
+    pub async fn get_id_by_nome(&self, nome: String) -> Result<Option<u64>, sqlx::Error> {
         let id = sqlx::query_scalar("SELECT id FROM Itens WHERE nome = ?")
             .bind(nome)
             .fetch_optional(&self.pool)
@@ -68,9 +75,9 @@ impl ItensRepository {
         Ok(id)
     }
 
-    pub async fn update_item_quantidade(
+    pub async fn update_quantidade(
         &self,
-        id: u64,
+        id: i32,
         nova_quantidade: i32,
     ) -> Result<u64, sqlx::Error> {
         let resultado = sqlx::query("UPDATE Itens SET quantidade_atual = ? WHERE id = ?")

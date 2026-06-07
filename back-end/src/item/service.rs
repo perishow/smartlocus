@@ -21,7 +21,7 @@ impl ItemService {
         // checa se já existe o item no repositorio.
 
         let id_item = repositorio
-            .insert_item(
+            .insert(
                 nome,
                 categoria,
                 quantidade_atual,
@@ -34,10 +34,17 @@ impl ItemService {
         Ok(id_item)
     }
 
+    pub async fn deletar_item(&self, id: i32) -> Result<u64, String> {
+        let repositorio = ItensRepository::new(self.pool.clone());
+        let id_item = repositorio.delete(id).await.map_err(|e| e.to_string())?;
+
+        Ok(id_item)
+    }
+
     pub async fn adicionar_quantidade_item(
         &self,
+        id: i32,
         quant_somar: i32,
-        id: u64,
     ) -> Result<u64, String> {
         if quant_somar < 0 {
             return Err(format!(
@@ -46,10 +53,7 @@ impl ItemService {
             ));
         }
         let repositorio = ItensRepository::new(self.pool.clone());
-        let item = repositorio
-            .get_item_by_id(id)
-            .await
-            .map_err(|e| e.to_string())?;
+        let item = repositorio.get(id).await.map_err(|e| e.to_string())?;
 
         let quantidade_atual = match item {
             Some(item) => item.quantidade_atual,
@@ -57,7 +61,7 @@ impl ItemService {
         };
         let nova_quantidade = quantidade_atual + quant_somar;
         let result = repositorio
-            .update_item_quantidade(id, nova_quantidade)
+            .update_quantidade(id, nova_quantidade)
             .await
             .map_err(|e| e.to_string())?;
         Ok(result)
@@ -65,8 +69,8 @@ impl ItemService {
 
     pub async fn subtrair_quantidade_item(
         &self,
+        id: i32,
         quant_subtrair: i32,
-        id: u64,
     ) -> Result<u64, String> {
         if quant_subtrair < 0 {
             return Err(format!(
@@ -75,10 +79,7 @@ impl ItemService {
             ));
         }
         let repositorio = ItensRepository::new(self.pool.clone());
-        let item = repositorio
-            .get_item_by_id(id)
-            .await
-            .map_err(|e| e.to_string())?;
+        let item = repositorio.get(id).await.map_err(|e| e.to_string())?;
 
         let quantidade_atual = match item {
             Some(item) => item.quantidade_atual,
@@ -93,7 +94,7 @@ impl ItemService {
         }
 
         let result = repositorio
-            .update_item_quantidade(id, nova_quantidade)
+            .update_quantidade(id, nova_quantidade)
             .await
             .map_err(|e| e.to_string())?;
         Ok(result)

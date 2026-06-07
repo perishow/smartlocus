@@ -56,7 +56,7 @@ impl MovimentacaoEstoqueRepository {
         
         Ok(resultado.rows_affected())
     }
-
+ 
     pub async fn get_movimentacao_estoque(&self, id: i32) -> Result<Option<MovimentacaoEstoque>, sqlx::Error> {
         let movimentacao = sqlx::query_as::<_, MovimentacaoEstoque>("SELECT * FROM Movimentacoes_Estoque WHERE id = ?")
             .bind(id)

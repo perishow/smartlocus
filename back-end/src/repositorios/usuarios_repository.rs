@@ -1,5 +1,5 @@
-use sqlx::{MySqlPool, FromRow};
 use serde::Serialize;
+use sqlx::{FromRow, MySqlPool};
 
 #[derive(Debug, FromRow, Serialize)]
 pub struct Usuario {
@@ -12,10 +12,9 @@ pub struct Usuario {
 
 #[derive(Clone)]
 pub struct UsuariosRepository {
-    pool: MySqlPool
+    pool: MySqlPool,
 }
 impl UsuariosRepository {
-
     pub fn new(pool: MySqlPool) -> Self {
         Self { pool }
     }
@@ -28,10 +27,7 @@ impl UsuariosRepository {
         Ok(usuarios)
     }
 
-    pub async fn get_usuario_by_id(
-        &self,
-        id: i32,
-    ) -> Result<Option<Usuario>, sqlx::Error> {
+    pub async fn get_usuario_by_id(&self, id: i32) -> Result<Option<Usuario>, sqlx::Error> {
         // Usamos query_as para mapear o resultado diretamente para a struct Usuario
         let usuario = sqlx::query_as::<_, Usuario>("SELECT * FROM Usuarios WHERE id = ?")
             .bind(id)
@@ -59,22 +55,21 @@ impl UsuariosRepository {
     ) -> Result<u64, sqlx::Error> {
         // Usamos sqlx::query (sem o _as) porque não estamos esperando retornar linhas,
         // mas sim executar uma ação de modificação no banco.
-        let result = sqlx::query(
-            "INSERT INTO Usuarios (nome, email, senha, perfil) VALUES (?, ?, ?, ?)"
-        )
-        .bind(nome)
-        .bind(email)
-        .bind(senha)
-        .bind(perfil) // O sqlx sabe como converter isso graças ao #[derive(Type)]
-        .execute(&self.pool)
-        .await?;
+        let result =
+            sqlx::query("INSERT INTO Usuarios (nome, email, senha, perfil) VALUES (?, ?, ?, ?)")
+                .bind(nome)
+                .bind(email)
+                .bind(senha)
+                .bind(perfil) // O sqlx sabe como converter isso graças ao #[derive(Type)]
+                .execute(&self.pool)
+                .await?;
 
         // O MySQL/MariaDB retorna o ID gerado pelo auto_increment.
         // É muito útil retornar esse valor caso precise dele logo após a inserção.
         Ok(result.last_insert_id())
     }
 
-    pub async fn delete_usuario_by_id(&self, id: i32) -> Result<u64, sqlx::Error>{
+    pub async fn delete(&self, id: i32) -> Result<u64, sqlx::Error> {
         let result = sqlx::query("DELETE FROM Usuarios WHERE id = ?")
             .bind(id)
             .execute(&self.pool)
@@ -82,8 +77,4 @@ impl UsuariosRepository {
 
         Ok(result.rows_affected())
     }
-
 }
-
-
-

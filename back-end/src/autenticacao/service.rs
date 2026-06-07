@@ -48,4 +48,12 @@ impl AuthService {
         println!("Cadastro concluído, id do usuário: {}", id_usuario);
         Ok(id_usuario)
     }
+
+    pub async fn deletar_usuario(&self, id: i32) -> Result<u64, String> {
+        println!("Requisição de deleção de usuario recebida");
+        let repositorio = UsuariosRepository::new(self.pool.clone());
+        let id_deletado = repositorio.delete(id).await.map_err(|e| e.to_string())?;
+        println!("Deleção concluída, id deletado: {}", id_deletado);
+        Ok(id_deletado)
+    }
 }
