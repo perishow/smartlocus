@@ -1,7 +1,13 @@
 use crate::repositorios::itens_repository::Item;
 
 use super::service::ItemService;
-use axum::{Json, Router, extract::State, http::StatusCode, routing::post};
+use axum::{
+    Json, Router,
+    extract::State,
+    http::StatusCode,
+    routing::{get, post},
+};
+use chrono::NaiveDateTime;
 use serde::Deserialize;
 use sqlx::MySqlPool;
 
@@ -21,8 +27,31 @@ struct DeleteItemRequest {
 
 #[derive(Deserialize)]
 struct UpdateQuantidadeRequest {
-    id: i32,
+    id_item: i32,
     quantidade: i32,
+    data_movimentacao: NaiveDateTime,
+    observacao: Option<String>,
+    responsavel_id: i32,
+}
+
+async fn get_all_items_handler(
+    State(pool): State<MySqlPool>,
+) -> Result<Json<Vec<Item>>, (StatusCode, String)> {
+    let item_service = ItemService::new(pool);
+    match item_service.get_all_items().await {
+        Ok(vec) => Ok(Json(vec)),
+        Err(mensagem) => Err((StatusCode::INTERNAL_SERVER_ERROR, mensagem)),
+    }
+}
+
+async fn get_all_items_quantidade_critica_handler(
+    State(pool): State<MySqlPool>,
+) -> Result<Json<Vec<Item>>, (StatusCode, String)> {
+    let item_service = ItemService::new(pool);
+    match item_service.get_all_quantidade_critica().await {
+        Ok(vec) => Ok(Json(vec)),
+        Err(mensagem) => Err((StatusCode::INTERNAL_SERVER_ERROR, mensagem)),
+    }
 }
 
 async fn register_item_handler(
@@ -59,10 +88,16 @@ async fn delete_item_handler(
 async fn adicionar_quantidade_handler(
     State(pool): State<MySqlPool>,
     Json(payload): Json<UpdateQuantidadeRequest>,
-) -> Result<Json<u64>, (StatusCode, String)> {
+) -> Result<Json<i32>, (StatusCode, String)> {
     let item_service = ItemService::new(pool);
     match item_service
-        .adicionar_quantidade_item(payload.id, payload.quantidade)
+        .adicionar_quantidade(
+            payload.id_item,
+            payload.quantidade,
+            payload.data_movimentacao,
+            payload.observacao,
+            payload.responsavel_id,
+        )
         .await
     {
         Ok(id) => Ok(Json(id)),
@@ -76,16 +111,27 @@ async fn subtrair_quantidade_handler(
 ) -> Result<Json<u64>, (StatusCode, String)> {
     let item_service = ItemService::new(pool);
     match item_service
-        .subtrair_quantidade_item(payload.id, payload.quantidade)
+        .subtrair_quantidade(
+            payload.id_item,
+            payload.quantidade,
+            payload.data_movimentacao,
+            payload.observacao,
+            payload.responsavel_id,
+        )
         .await
     {
         Ok(id) => Ok(Json(id)),
-        Err(mensagem) => Err((StatusCode::NOT_ACCEPTABLE, mensagem)),
+        Err(mensagem) => Err((StatusCode::INTERNAL_SERVER_ERROR, mensagem)),
     }
 }
 
 pub fn router(pool: MySqlPool) -> Router {
     Router::new()
+        .route("/get-all", get(get_all_items_handler))
+        .route(
+            "/get-all-quantidade-critica",
+            get(get_all_items_quantidade_critica_handler),
+        )
         .route("/register-item", post(register_item_handler))
         .route("/delete-item", post(delete_item_handler))
         .route("/adicionar-quantidade", post(adicionar_quantidade_handler))

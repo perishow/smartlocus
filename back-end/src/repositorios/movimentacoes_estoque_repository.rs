@@ -21,15 +21,15 @@ impl MovimentacaoEstoqueRepository {
         Self { pool }
     }
 
-    pub async fn insert_movimentacao_estoque(
+    pub async fn insert(
         &self,
         item_id: i32,
-        tipo: &str,
+        tipo: String,
         quantidade: i32,
         data_movimentacao: NaiveDateTime,
-        observacao: Option<&str>,
+        observacao: Option<String>,
         responsavel_id: i32
-    ) -> Result<u64, sqlx::Error> {
+    ) -> Result<i32, sqlx::Error> {
         let resultado = sqlx::query(
             "INSERT INTO Movimentacoes_Estoque (item_id, tipo, quantidade, data_movimentacao, observacao, responsavel_id) VALUES (?, ?, ?, ?, ?, ?)"
         ) 
@@ -42,7 +42,7 @@ impl MovimentacaoEstoqueRepository {
         .execute(&self.pool)
         .await?;
 
-        Ok(resultado.last_insert_id())
+        Ok(resultado.last_insert_id() as i32)
     }
 
     pub async fn delete_movimentacao_estoque(
@@ -63,5 +63,14 @@ impl MovimentacaoEstoqueRepository {
             .fetch_optional(&self.pool)
             .await?;
         Ok(movimentacao)
+    }
+
+    pub async fn get_all(&self) -> Result<Vec<MovimentacaoEstoque>, sqlx::Error> {
+        let movimentacao_vec = sqlx::query_as::<_,MovimentacaoEstoque>(
+            "SELECT * FROM Movimentacoes_Estoque" 
+        )
+            .fetch_all(&self.pool)
+            .await?;
+        Ok(movimentacao_vec)
     }
 }

@@ -1,7 +1,8 @@
 use crate::repositorios::{
-    itens_repository::ItensRepository,
+    itens_repository::{Item, ItensRepository},
     movimentacoes_estoque_repository::MovimentacaoEstoqueRepository,
 };
+use chrono::NaiveDateTime;
 use sqlx::MySqlPool;
 
 pub struct ItemService {
@@ -44,40 +45,80 @@ impl ItemService {
         Ok(id_item)
     }
 
-    // pub async fn adicionar_quantidade_item(
-    //     &self,
-    //     id: i32,
-    //     quant_somar: i32,
-    // ) -> Result<u64, String> {
-    //     if quant_somar < 0 {
-    //         return Err(format!(
-    //             "Erro: A quantidade a ser somada não pode ser negativa! quantidade inserida: {}",
-    //             quant_somar
-    //         ));
-    //     }
-    //     let repositorio_item = ItensRepository::new(self.pool.clone());
-    //     let repositorio_movimentacoes = MovimentacaoEstoqueRepository::new(self.pool.clone());
-    //     let item = repositorio_item.get(id).await.map_err(|e| e.to_string())?;
-    //
-    //     let quantidade_atual = match item {
-    //         Some(item) => item.quantidade_atual,
-    //         None => return Err(format!("Erro: Item com ID {} não foi encontrado", id)),
-    //     };
-    //     let nova_quantidade = quantidade_atual + quant_somar;
-    //     let result = repositorio_item
-    //         .update_quantidade(id, nova_quantidade)
-    //         .await
-    //         .map_err(|e| e.to_string())?;
-    //     //registro da movimentação:
-    //     match repositorio_movimentacoes.insert_movimentacao_estoque(item_id, tipo, quantidade, data_movimentacao, observacao, responsavel_id)
-    //
-    //     Ok(result)
-    // }
+    pub async fn get_all_items(&self) -> Result<Vec<Item>, String> {
+        let repositorio = ItensRepository::new(self.pool.clone());
+        let item_vec = repositorio.get_all().await.map_err(|e| e.to_string())?;
+        Ok(item_vec)
+    }
 
-    pub async fn subtrair_quantidade_item(
+    pub async fn get_all_quantidade_critica(&self) -> Result<Vec<Item>, String> {
+        let repositorio = ItensRepository::new(self.pool.clone());
+        let item_vec = repositorio
+            .get_all_quantidade_critica()
+            .await
+            .map_err(|e| e.to_string())?;
+        Ok(item_vec)
+    }
+
+    pub async fn adicionar_quantidade(
         &self,
-        id: i32,
+        id_item: i32,
+        quant_somar: i32,
+        data_movimentacao: NaiveDateTime,
+        observacao: Option<String>,
+        responsavel_id: i32,
+    ) -> Result<i32, String> {
+        if quant_somar < 0 {
+            return Err(format!(
+                "Erro: A quantidade a ser somada não pode ser negativa! quantidade inserida: {}",
+                quant_somar
+            ));
+        }
+        let repositorio_item = ItensRepository::new(self.pool.clone());
+        let repositorio_movimentacoes = MovimentacaoEstoqueRepository::new(self.pool.clone());
+        let item = repositorio_item
+            .get(id_item)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        let quantidade_atual = match item {
+            Some(item) => item.quantidade_atual,
+            None => return Err(format!("Erro: Item com ID {} não foi encontrado", id_item)),
+        };
+        let nova_quantidade = quantidade_atual + quant_somar;
+        let result_item = repositorio_item
+            .update_quantidade(id_item, nova_quantidade)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        //registro da movimentação:
+        let resultado_movimentacao = repositorio_movimentacoes
+            .insert(
+                id_item,
+                String::from("Entrada"),
+                quant_somar,
+                data_movimentacao,
+                observacao,
+                responsavel_id,
+            )
+            .await;
+        match resultado_movimentacao {
+            Ok(id) => {
+                println!("Movimentacao Criada com sucesso, id = {}", id);
+            }
+            Err(mensagem) => return Err(format!("Erro ao criar movimentação: {}", mensagem)),
+        }
+
+        Ok(result_item as i32)
+    }
+
+    pub async fn subtrair_quantidade(
+        &self,
+        id_item: i32,
         quant_subtrair: i32,
+        data_movimentacao: NaiveDateTime,
+        observacao: Option<String>,
+        responsavel_id: i32,
     ) -> Result<u64, String> {
         if quant_subtrair < 0 {
             return Err(format!(
@@ -85,12 +126,17 @@ impl ItemService {
                 quant_subtrair
             ));
         }
-        let repositorio = ItensRepository::new(self.pool.clone());
-        let item = repositorio.get(id).await.map_err(|e| e.to_string())?;
+        let repositorio_item = ItensRepository::new(self.pool.clone());
+        let repositorio_movimentacoes = MovimentacaoEstoqueRepository::new(self.pool.clone());
+
+        let item = repositorio_item
+            .get(id_item)
+            .await
+            .map_err(|e| e.to_string())?;
 
         let quantidade_atual = match item {
             Some(item) => item.quantidade_atual,
-            None => return Err(format!("Erro: Item com ID {} não foi encontrado", id)),
+            None => return Err(format!("Erro: Item com ID {} não foi encontrado", id_item)),
         };
         let nova_quantidade = quantidade_atual - quant_subtrair;
         if nova_quantidade < 0 {
@@ -99,11 +145,29 @@ impl ItemService {
                 nova_quantidade
             ));
         }
-
-        let result = repositorio
-            .update_quantidade(id, nova_quantidade)
+        let result = repositorio_item
+            .update_quantidade(id_item, nova_quantidade)
             .await
             .map_err(|e| e.to_string())?;
+
+        //registro da movimentação:
+        let resultado_movimentacao = repositorio_movimentacoes
+            .insert(
+                id_item,
+                String::from("Saída"),
+                quant_subtrair,
+                data_movimentacao,
+                observacao,
+                responsavel_id,
+            )
+            .await;
+        match resultado_movimentacao {
+            Ok(id) => {
+                println!("Movimentacao Criada com sucesso, id = {}", id);
+            }
+            Err(mensagem) => return Err(format!("Erro ao criar movimentação: {}", mensagem)),
+        }
+
         Ok(result)
     }
 }
