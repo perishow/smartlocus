@@ -1,2 +1,2 @@
-curl -i -X POST http://localhost:3000/api/v1/subtrair-quantidade -H "Content-Type: application/json" -d @update_quantidade_teste.json
+curl -i -X POST http://localhost:3000/api/v1/item/adicionar-quantidade -H "Content-Type: application/json" -d @update_quantidade_teste.json
 

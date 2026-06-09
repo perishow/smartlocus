@@ -1,7 +1,7 @@
 {
   "id_item": 2,
-  "quantidade": 3,
+  "quantidade": 2,
   "data_movimentacao": "2025-03-20T14:30:00",
   "observacao": "Adição realizada utilizando a rota",
-  "responsavel_id": 1 
+  "responsavel_id": 2
 }
