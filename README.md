@@ -18,13 +18,18 @@ Smartlocus é uma solução de gerenciamento de almoxarifado, implementada como 
 O banco de dados MariaDB é instanciado automaticamente ao iniciar o backend e já vem com alguns dados instanciados porém, qualquer dado inserido posteriormente ao banco não é persistente e será deletado caso o banco seja reiniciado.
 Para garantir a persistência dos dados novos, o arquivo "database/init.sql" deve ser substituído por um novo dump do banco. Esse dump pode ser gerado utilizando o comando:
 
-```docker compose exec mariadb mariadb-dump -u root -psenha smartlocus > init.sql```
+```bash
+docker compose exec mariadb mariadb-dump -u root -psenha smartlocus > init.sql
+```
 
 ### Backend 
 
 O backend foi codado em rust e utiliza o cargo como iniciador padrão. Com o cargo previamente instalado, basta entrar no diretório "/back-end" e utilizar o comando:
 
-``` cargo run ```
+
+```bash 
+cargo run 
+```
 
 O backend iniciará o banco de dados e estabelecerá a conexão após algumas tentativas, após isso ele está pronto para receber requisições.
 
@@ -41,31 +46,37 @@ Registra um novo usuário no sistema.
 
 Corpo da requisição:
 
+```json
 {
   "nome": "Leozinho Ruindade Pura",
   "email": "leozinho244@gmail.com",
   "senha": "senha_super_segura123",
   "perfil": "Operador"
 }
+```
 
 #### `POST` /api/v1/auth/login
 Checa se o usuário já possui cadastro.
 
 Corpo da requisição:
 
+```json
 {
   "nome": "Peri de Lima",
   "senha": "123456"
 }
+```
 
 #### `POST` /api/v1/auth/delete
 Deleta o registro do usuário.
 
 Corpo da requisição:
 
+```json
 {
   "id": 1
 }
+```
 
 ### Item
 
@@ -80,6 +91,7 @@ Registra um novo item no sistema.
 
 Corpo da requisição:
 
+```json
 {
   "nome": "nome do produto",
   "categoria": "categoria do produto",
@@ -87,21 +99,25 @@ Corpo da requisição:
   "quantidade_minima": 3,
   "localizacao": "localizacao do produto"
 }
+```
 
 #### `POST` /api/v1/item/delete-item
 deleta o item do sistema.
 
 Corpo da requisição:
 
+```json
 {
   "id": 1
 }
+```
 
 #### `POST` /api/v1/item/adicionar-quantidade
 Adiciona uma quantidade especificada ao item previamente registrado.
 
 Corpo da requisição: 
 
+```json
 {
   "id_item": 1,
   "quantidade": 200,
@@ -109,12 +125,14 @@ Corpo da requisição:
   "observacao": "observação opcional",
   "responsavel_id": 67
 }
+```
 
 #### `POST` /api/v1/item/subtrair-quantidade
 Subtrai uma quantidade especificada do item previamente registrado.
 
 Corpo da requisição:
 
+```json
 {
   "id_item": 1,
   "quantidade": 200,
@@ -122,6 +140,7 @@ Corpo da requisição:
   "observacao": "observação opcional",
   "responsavel_id": 67
 }
+```
 
 ### Movimentacao do estoque:
 
