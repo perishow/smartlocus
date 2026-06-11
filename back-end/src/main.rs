@@ -3,6 +3,7 @@ use sqlx::mysql::MySqlPoolOptions;
 use std::env;
 use std::process::Command;
 use tokio::net::TcpListener;
+use tower_http::cors::{Any, CorsLayer};
 
 mod autenticacao;
 mod item;
@@ -66,14 +67,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "❌ Não foi possível conectar ao banco de dados após várias tentativas. Abortando...",
     );
 
-    // 4. Juntamos as rotas e subimos o servidor
+    // 4. Configuramos o CORS para permitir o acesso do frontend (Vite em :5173)
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any);
+
+    // 5. Juntamos as rotas e subimos o servidor
     let app = Router::new()
         .nest("/api/v1/auth", autenticacao::routes::router(pool.clone()))
         .nest("/api/v1/item", item::routes::router(pool.clone()))
         .nest(
             "/api/v1/movimentacao",
             movimentacao::routes::router(pool.clone()),
-        );
+        )
+        .layer(cors);
 
     let listener = TcpListener::bind("0.0.0.0:3000").await?;
     println!("🚀 Servidor rodando em http://localhost:3000");

@@ -6,6 +6,7 @@ pub struct Usuario {
     pub id: i32,
     pub nome: String,
     pub email: String,
+    #[serde(skip_serializing)]
     pub senha: String,
     pub perfil: String,
 }

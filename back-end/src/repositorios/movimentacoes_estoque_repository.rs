@@ -9,8 +9,22 @@ pub struct MovimentacaoEstoque {
     pub tipo: String,
     pub quantidade: i32,
     pub data_movimentacao: NaiveDateTime,
-    pub observacao: String,
+    pub observacao: Option<String>,
     pub responsavel_id: i32,
+}
+
+/// Movimentação enriquecida com o nome do responsável (JOIN com Usuarios).
+/// Usada no histórico por item exibido no drawer do frontend (RF-004).
+#[derive(Debug, FromRow, Serialize)]
+pub struct MovimentacaoComResponsavel {
+    pub id: i32,
+    pub item_id: i32,
+    pub tipo: String,
+    pub quantidade: i32,
+    pub data_movimentacao: NaiveDateTime,
+    pub observacao: Option<String>,
+    pub responsavel_id: i32,
+    pub responsavel_nome: String,
 }
 
 pub struct MovimentacaoEstoqueRepository {
@@ -67,10 +81,28 @@ impl MovimentacaoEstoqueRepository {
 
     pub async fn get_all(&self) -> Result<Vec<MovimentacaoEstoque>, sqlx::Error> {
         let movimentacao_vec = sqlx::query_as::<_,MovimentacaoEstoque>(
-            "SELECT * FROM Movimentacoes_Estoque" 
+            "SELECT * FROM Movimentacoes_Estoque"
         )
             .fetch_all(&self.pool)
             .await?;
+        Ok(movimentacao_vec)
+    }
+
+    pub async fn get_by_item_id(
+        &self,
+        item_id: i32,
+    ) -> Result<Vec<MovimentacaoComResponsavel>, sqlx::Error> {
+        let movimentacao_vec = sqlx::query_as::<_, MovimentacaoComResponsavel>(
+            "SELECT m.id, m.item_id, m.tipo, m.quantidade, m.data_movimentacao, \
+             m.observacao, m.responsavel_id, u.nome AS responsavel_nome \
+             FROM Movimentacoes_Estoque m \
+             JOIN Usuarios u ON u.id = m.responsavel_id \
+             WHERE m.item_id = ? \
+             ORDER BY m.data_movimentacao DESC",
+        )
+        .bind(item_id)
+        .fetch_all(&self.pool)
+        .await?;
         Ok(movimentacao_vec)
     }
 }

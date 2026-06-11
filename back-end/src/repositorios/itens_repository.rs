@@ -8,7 +8,7 @@ pub struct Item {
     pub categoria: String,
     pub quantidade_atual: i32,
     pub quantidade_minima: i32,
-    pub localizacao: String,
+    pub localizacao: Option<String>,
 }
 
 #[derive(Clone)]
@@ -77,7 +77,7 @@ impl ItensRepository {
 
     pub async fn get_all_quantidade_critica(&self) -> Result<Vec<Item>, sqlx::Error> {
         let item_vec = sqlx::query_as::<_, Item>(
-            "SELECT * FROM Itens WHERE quantidade_atual < quantidade_minima",
+            "SELECT * FROM Itens WHERE quantidade_atual <= quantidade_minima",
         )
         .fetch_all(&self.pool)
         .await?;
