@@ -27,7 +27,7 @@ import { getAllItens } from "@/features/itens/api";
 import { useAuth } from "@/context/AuthContext";
 import { isCritico, type Item } from "@/types";
 
-const POR_PAGINA = 6;
+const POR_PAGINA = 20;
 const TODAS = "__todas__";
 
 export function EstoquePage() {
