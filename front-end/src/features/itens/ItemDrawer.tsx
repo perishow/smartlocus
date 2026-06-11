@@ -30,7 +30,7 @@ interface ItemDrawerProps {
 }
 
 export function ItemDrawer({ item, open, onOpenChange }: ItemDrawerProps) {
-  const { usuario } = useAuth();
+  const { usuario, isOperador } = useAuth();
   const queryClient = useQueryClient();
   const [acao, setAcao] = useState<Acao>("Entrada");
   const [quantidade, setQuantidade] = useState("");
@@ -116,7 +116,8 @@ export function ItemDrawer({ item, open, onOpenChange }: ItemDrawerProps) {
               </div>
             </div>
 
-            {/* Ação de movimentação */}
+            {/* Ação de movimentação — apenas Operadores podem alterar saldo */}
+            {isOperador && (
             <div className="space-y-3 rounded-lg border border-border p-4">
               <div className="grid grid-cols-2 gap-2">
                 <Button
@@ -164,6 +165,7 @@ export function ItemDrawer({ item, open, onOpenChange }: ItemDrawerProps) {
                 Confirmar {acao}
               </Button>
             </div>
+            )}
 
             {/* Histórico recente */}
             <div className="space-y-2">

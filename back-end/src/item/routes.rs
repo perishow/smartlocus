@@ -13,6 +13,7 @@ use sqlx::MySqlPool;
 
 #[derive(Deserialize)]
 struct RegisterItemRequest {
+    solicitante_id: i32,
     nome: String,
     categoria: String,
     quantidade_atual: i32,
@@ -22,6 +23,7 @@ struct RegisterItemRequest {
 
 #[derive(Deserialize)]
 struct DeleteItemRequest {
+    solicitante_id: i32,
     id: i32,
 }
 
@@ -61,6 +63,7 @@ async fn register_item_handler(
     let item_service = ItemService::new(pool);
     match item_service
         .inserir_novo_item(
+            payload.solicitante_id,
             payload.nome,
             payload.categoria,
             payload.quantidade_atual,
@@ -70,7 +73,13 @@ async fn register_item_handler(
         .await
     {
         Ok(item_id) => Ok(Json(item_id)),
-        Err(mensagem) => Err((StatusCode::INTERNAL_SERVER_ERROR, mensagem)),
+        Err(mensagem) => {
+            if mensagem.starts_with("PERMISSAO_NEGADA") {
+                Err((StatusCode::FORBIDDEN, mensagem))
+            } else {
+                Err((StatusCode::INTERNAL_SERVER_ERROR, mensagem))
+            }
+        }
     }
 }
 
@@ -79,9 +88,18 @@ async fn delete_item_handler(
     Json(payload): Json<DeleteItemRequest>,
 ) -> Result<Json<u64>, (StatusCode, String)> {
     let item_service = ItemService::new(pool);
-    match item_service.deletar_item(payload.id).await {
+    match item_service
+        .deletar_item(payload.solicitante_id, payload.id)
+        .await
+    {
         Ok(id) => Ok(Json(id)),
-        Err(mensagem) => Err((StatusCode::NOT_FOUND, mensagem)),
+        Err(mensagem) => {
+            if mensagem.starts_with("PERMISSAO_NEGADA") {
+                Err((StatusCode::FORBIDDEN, mensagem))
+            } else {
+                Err((StatusCode::NOT_FOUND, mensagem))
+            }
+        }
     }
 }
 
@@ -101,7 +119,13 @@ async fn adicionar_quantidade_handler(
         .await
     {
         Ok(id) => Ok(Json(id)),
-        Err(mensagem) => Err((StatusCode::NOT_ACCEPTABLE, mensagem)),
+        Err(mensagem) => {
+            if mensagem.starts_with("PERMISSAO_NEGADA") {
+                Err((StatusCode::FORBIDDEN, mensagem))
+            } else {
+                Err((StatusCode::NOT_ACCEPTABLE, mensagem))
+            }
+        }
     }
 }
 
@@ -121,7 +145,13 @@ async fn subtrair_quantidade_handler(
         .await
     {
         Ok(id) => Ok(Json(id)),
-        Err(mensagem) => Err((StatusCode::INTERNAL_SERVER_ERROR, mensagem)),
+        Err(mensagem) => {
+            if mensagem.starts_with("PERMISSAO_NEGADA") {
+                Err((StatusCode::FORBIDDEN, mensagem))
+            } else {
+                Err((StatusCode::INTERNAL_SERVER_ERROR, mensagem))
+            }
+        }
     }
 }
 

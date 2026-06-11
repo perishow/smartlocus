@@ -49,6 +49,63 @@ impl AuthService {
         Ok(id_usuario)
     }
 
+    /// Cria um novo usuário, mas SOMENTE se o solicitante for um Operador.
+    /// Erros de permissão começam com o prefixo "PERMISSAO_NEGADA" para que a
+    /// camada de rotas possa responder com 403 Forbidden.
+    pub async fn criar_usuario_por_operador(
+        &self,
+        solicitante_id: i32,
+        nome: String,
+        email: String,
+        senha: String,
+        perfil: String,
+    ) -> Result<u64, String> {
+        let repository = UsuariosRepository::new(self.pool.clone());
+
+        // 1. Verifica se o solicitante existe e é um Operador.
+        let solicitante = repository
+            .get_usuario_by_id(solicitante_id)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        match solicitante {
+            Some(usuario) if usuario.perfil == "Operador" => {}
+            Some(_) => {
+                return Err(
+                    "PERMISSAO_NEGADA: Apenas usuários do perfil Operador podem criar novos usuários."
+                        .to_string(),
+                );
+            }
+            None => {
+                return Err(format!(
+                    "PERMISSAO_NEGADA: Solicitante com ID {} não encontrado.",
+                    solicitante_id
+                ));
+            }
+        }
+
+        // 2. Garante que o perfil informado é válido.
+        if perfil != "Operador" && perfil != "Consultor" {
+            return Err(format!(
+                "Perfil inválido: '{}'. Use 'Operador' ou 'Consultor'.",
+                perfil
+            ));
+        }
+
+        // 3. Cria o usuário.
+        let id_usuario = repository
+            .insert_usuario(&nome, &email, &senha, &perfil)
+            .await
+            .map_err(|e| e.to_string())?;
+        println!("Usuário criado por Operador {}, novo id: {}", solicitante_id, id_usuario);
+        Ok(id_usuario)
+    }
+
+    pub async fn listar_usuarios(&self) -> Result<Vec<Usuario>, String> {
+        let repository = UsuariosRepository::new(self.pool.clone());
+        repository.get_usuarios().await.map_err(|e| e.to_string())
+    }
+
     pub async fn deletar_usuario(&self, id: i32) -> Result<u64, String> {
         println!("Requisição de deleção de usuario recebida");
         let repositorio = UsuariosRepository::new(self.pool.clone());

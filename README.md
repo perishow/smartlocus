@@ -67,6 +67,24 @@ Corpo da requisição:
 }
 ```
 
+#### `POST` /api/v1/auth/create-user
+Cria um novo usuário, **somente** se o `solicitante_id` corresponder a um usuário com perfil `Operador`. Retorna `403 Forbidden` caso contrário.
+
+Corpo da requisição:
+
+```json
+{
+  "solicitante_id": 1,
+  "nome": "Novo Funcionario",
+  "email": "novo@smartlocus.com",
+  "senha": "senha123",
+  "perfil": "Consultor"
+}
+```
+
+#### `GET` /api/v1/auth/users
+Lista todos os usuários cadastrados (sem expor as senhas).
+
 #### `POST` /api/v1/auth/delete
 Deleta o registro do usuário.
 
@@ -87,12 +105,13 @@ Coleta todos os itens registrados e suas respectivas informações.
 Coleta todos os itens registrados que estão com a quantidade menor do que a quantidade mínima registrada.
 
 #### `POST` /api/v1/item/register-item
-Registra um novo item no sistema.
+Registra um novo item no sistema. O `solicitante_id` deve ser um usuário com perfil `Operador`, caso contrário retorna `403 Forbidden`.
 
 Corpo da requisição:
 
 ```json
 {
+  "solicitante_id": 1,
   "nome": "nome do produto",
   "categoria": "categoria do produto",
   "quantidade_atual": 0,
@@ -102,18 +121,19 @@ Corpo da requisição:
 ```
 
 #### `POST` /api/v1/item/delete-item
-deleta o item do sistema.
+deleta o item do sistema. O `solicitante_id` deve ser um usuário com perfil `Operador`, caso contrário retorna `403 Forbidden`.
 
 Corpo da requisição:
 
 ```json
 {
+  "solicitante_id": 1,
   "id": 1
 }
 ```
 
 #### `POST` /api/v1/item/adicionar-quantidade
-Adiciona uma quantidade especificada ao item previamente registrado.
+Adiciona uma quantidade especificada ao item previamente registrado. O `responsavel_id` deve ser um usuário com perfil `Operador`, caso contrário retorna `403 Forbidden`.
 
 Corpo da requisição: 
 
@@ -128,7 +148,7 @@ Corpo da requisição:
 ```
 
 #### `POST` /api/v1/item/subtrair-quantidade
-Subtrai uma quantidade especificada do item previamente registrado.
+Subtrai uma quantidade especificada do item previamente registrado. O `responsavel_id` deve ser um usuário com perfil `Operador`, caso contrário retorna `403 Forbidden`.
 
 Corpo da requisição:
 

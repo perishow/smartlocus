@@ -1,16 +1,18 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Boxes, LogOut } from "lucide-react";
+import { LayoutDashboard, Boxes, Users, LogOut } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 
-const links = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/estoque", label: "Estoque", icon: Boxes },
-];
-
 export function Sidebar() {
-  const { logout } = useAuth();
+  const { logout, isOperador } = useAuth();
+
+  const links = [
+    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/estoque", label: "Estoque", icon: Boxes },
+    // Gestão de usuários é exclusiva do Operador.
+    ...(isOperador ? [{ to: "/usuarios", label: "Usuários", icon: Users }] : []),
+  ];
 
   return (
     <aside className="flex h-full w-[200px] shrink-0 flex-col border-r border-border bg-card">

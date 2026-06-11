@@ -1,6 +1,7 @@
 use crate::repositorios::{
     itens_repository::{Item, ItensRepository},
     movimentacoes_estoque_repository::MovimentacaoEstoqueRepository,
+    usuarios_repository::UsuariosRepository,
 };
 use chrono::NaiveDateTime;
 use sqlx::MySqlPool;
@@ -13,14 +14,38 @@ impl ItemService {
         Self { pool }
     }
 
+    /// Garante que o responsável pela movimentação é um Operador.
+    /// Consultores não podem alterar saldo. Erros de permissão usam o prefixo
+    /// "PERMISSAO_NEGADA" para a camada de rotas responder com 403.
+    async fn garantir_operador(&self, responsavel_id: i32) -> Result<(), String> {
+        let repositorio_usuarios = UsuariosRepository::new(self.pool.clone());
+        let usuario = repositorio_usuarios
+            .get_usuario_by_id(responsavel_id)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        match usuario {
+            Some(u) if u.perfil == "Operador" => Ok(()),
+            Some(_) => Err(
+                "PERMISSAO_NEGADA: Apenas Operadores podem realizar esta operação.".to_string(),
+            ),
+            None => Err(format!(
+                "PERMISSAO_NEGADA: Responsável com ID {} não encontrado.",
+                responsavel_id
+            )),
+        }
+    }
+
     pub async fn inserir_novo_item(
         &self,
+        solicitante_id: i32,
         nome: String,
         categoria: String,
         quantidade_atual: i32,
         quantidade_minima: i32,
         localizacao: String,
     ) -> Result<u64, String> {
+        self.garantir_operador(solicitante_id).await?;
         let repositorio = ItensRepository::new(self.pool.clone());
         // checa se já existe o item no repositorio.
 
@@ -38,7 +63,8 @@ impl ItemService {
         Ok(id_item)
     }
 
-    pub async fn deletar_item(&self, id: i32) -> Result<u64, String> {
+    pub async fn deletar_item(&self, solicitante_id: i32, id: i32) -> Result<u64, String> {
+        self.garantir_operador(solicitante_id).await?;
         let repositorio = ItensRepository::new(self.pool.clone());
         let id_item = repositorio.delete(id).await.map_err(|e| e.to_string())?;
 
@@ -74,6 +100,7 @@ impl ItemService {
                 quant_somar
             ));
         }
+        self.garantir_operador(responsavel_id).await?;
         let repositorio_item = ItensRepository::new(self.pool.clone());
         let repositorio_movimentacoes = MovimentacaoEstoqueRepository::new(self.pool.clone());
         let item = repositorio_item
@@ -126,6 +153,7 @@ impl ItemService {
                 quant_subtrair
             ));
         }
+        self.garantir_operador(responsavel_id).await?;
         let repositorio_item = ItensRepository::new(self.pool.clone());
         let repositorio_movimentacoes = MovimentacaoEstoqueRepository::new(self.pool.clone());
 

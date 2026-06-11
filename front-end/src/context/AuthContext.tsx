@@ -5,6 +5,8 @@ const STORAGE_KEY = "smartlocus.usuario";
 
 interface AuthContextValue {
   usuario: Usuario | null;
+  /** true quando o usuário logado tem perfil "Operador". */
+  isOperador: boolean;
   login: (usuario: Usuario, persistir: boolean) => void;
   logout: () => void;
 }
@@ -45,7 +47,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ usuario, login, logout }}>
+    <AuthContext.Provider
+      value={{ usuario, isOperador: usuario?.perfil === "Operador", login, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

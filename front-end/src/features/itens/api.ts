@@ -12,6 +12,8 @@ export async function getItensCriticos(): Promise<Item[]> {
 }
 
 export interface NovoItemPayload {
+  /** ID do Operador que está cadastrando (validado no backend). */
+  solicitante_id: number;
   nome: string;
   categoria: string;
   quantidade_atual: number;
@@ -24,8 +26,8 @@ export async function registrarItem(payload: NovoItemPayload): Promise<number> {
   return data;
 }
 
-export async function deletarItem(id: number): Promise<number> {
-  const { data } = await api.post<number>("/item/delete-item", { id });
+export async function deletarItem(solicitante_id: number, id: number): Promise<number> {
+  const { data } = await api.post<number>("/item/delete-item", { solicitante_id, id });
   return data;
 }
 

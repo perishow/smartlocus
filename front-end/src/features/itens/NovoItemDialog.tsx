@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { registrarItem } from "@/features/itens/api";
+import { useAuth } from "@/context/AuthContext";
 import { getApiErrorMessage } from "@/lib/api";
 
 const VAZIO = {
@@ -26,6 +27,7 @@ const VAZIO = {
 };
 
 export function NovoItemDialog() {
+  const { usuario } = useAuth();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(VAZIO);
@@ -44,11 +46,13 @@ export function NovoItemDialog() {
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!usuario) return;
     if (!form.nome.trim() || !form.categoria.trim()) {
       toast.error("Informe ao menos o nome e a categoria.");
       return;
     }
     mutation.mutate({
+      solicitante_id: usuario.id,
       nome: form.nome.trim(),
       categoria: form.categoria.trim(),
       quantidade_atual: Number(form.quantidade_atual) || 0,

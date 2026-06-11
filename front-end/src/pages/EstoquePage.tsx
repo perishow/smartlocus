@@ -24,12 +24,14 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { NovoItemDialog } from "@/features/itens/NovoItemDialog";
 import { ItemDrawer } from "@/features/itens/ItemDrawer";
 import { getAllItens } from "@/features/itens/api";
+import { useAuth } from "@/context/AuthContext";
 import { isCritico, type Item } from "@/types";
 
 const POR_PAGINA = 6;
 const TODAS = "__todas__";
 
 export function EstoquePage() {
+  const { isOperador } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [busca, setBusca] = useState("");
   const [categoria, setCategoria] = useState<string>(TODAS);
@@ -129,7 +131,7 @@ export function EstoquePage() {
           Mostrar apenas Críticos
         </label>
 
-        <NovoItemDialog />
+        {isOperador && <NovoItemDialog />}
       </div>
 
       {/* Tabela */}
