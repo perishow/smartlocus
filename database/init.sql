@@ -1,28 +1,31 @@
-/*M!999999\- enable the sandbox mode */ 
--- MariaDB dump 10.19-12.2.2-MariaDB, for debian-linux-gnu (x86_64)
---
--- Host: localhost    Database: smartlocus
--- ------------------------------------------------------
--- Server version	12.2.2-MariaDB-ubu2404
+-- ============================================================================
+--  SmartLocus — Povoamento inicial do banco (MariaDB)
+--  Executado automaticamente na PRIMEIRA inicialização do container.
+--  Para reaplicar após mudanças: docker compose down -v && docker compose up -d
+-- ============================================================================
 
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*M!100616 SET @OLD_NOTE_VERBOSITY=@@NOTE_VERBOSITY, NOTE_VERBOSITY=0 */;
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
 
---
--- Table structure for table `Itens`
---
+-- ----------------------------- Usuarios ------------------------------------
+DROP TABLE IF EXISTS `Usuarios`;
+CREATE TABLE `Usuarios` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `nome` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `senha` varchar(255) NOT NULL,
+  `perfil` enum('Consultor','Operador') NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
+INSERT INTO `Usuarios` (id, nome, email, senha, perfil) VALUES
+(1, 'Peri de Lima',           'peri@smartlocus.com',     '123456',                 'Operador'),
+(2, 'Leozinho Ruindade Pura', 'leozinho244@gmail.com',   'senha_super_segura123',  'Operador'),
+(3, 'Carla Mendes',           'carla@smartlocus.com',    'consultor123',           'Consultor');
+
+-- ----------------------------- Itens ---------------------------------------
 DROP TABLE IF EXISTS `Itens`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `Itens` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `nome` varchar(255) NOT NULL,
@@ -31,31 +34,24 @@ CREATE TABLE `Itens` (
   `quantidade_minima` int(11) DEFAULT 0,
   `localizacao` varchar(150) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
---
--- Dumping data for table `Itens`
---
+-- Itens com quantidade_atual <= quantidade_minima ficam CRÍTICOS (RF-002):
+-- 2 (Caneta), 4 (Detergente), 6 (Papel Higiênico), 7 (Cartucho), 10 (Café).
+INSERT INTO `Itens` (id, nome, categoria, quantidade_atual, quantidade_minima, localizacao) VALUES
+(1,  'Papel A4 (Resma)',            'Material de Escritório', 50, 20, 'Prateleira A1'),
+(2,  'Caneta Esferográfica Azul',   'Material de Escritório',  8, 15, 'Prateleira A2'),
+(3,  'Marcador para Quadro Branco', 'Material de Escritório', 12,  5, 'Prateleira A1'),
+(4,  'Detergente Neutro 5L',        'Material de Limpeza',     3, 10, 'Armário de Limpeza'),
+(5,  'Vassoura',                    'Material de Limpeza',     6,  2, 'Armário de Limpeza'),
+(6,  'Papel Higiênico (Fardo)',     'Material de Limpeza',     4,  4, 'Almoxarifado B'),
+(7,  'Cartucho de Tinta HP 664',    'Informática',             2,  5, 'Prateleira C3'),
+(8,  'Mouse USB',                   'Informática',            12,  4, 'Prateleira C1'),
+(9,  'Cabo HDMI 2m',                'Informática',             7,  3, 'Prateleira C2'),
+(10, 'Café em Pó (500g)',           'Copa',                    5,  8, 'Cozinha');
 
-SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
-LOCK TABLES `Itens` WRITE;
-/*!40000 ALTER TABLE `Itens` DISABLE KEYS */;
-INSERT INTO `Itens` VALUES
-(1,'Marcador/Piloto para Quadro Branco','Material de Escritório',10,2,'Prateleira A1'),
-(2,'Vassoura','Material de Limpeza',8,1,'Armário de Limpeza');
-/*!40000 ALTER TABLE `Itens` ENABLE KEYS */;
-UNLOCK TABLES;
-COMMIT;
-SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
-
---
--- Table structure for table `Movimentacoes_Estoque`
---
-
+-- ----------------------- Movimentacoes_Estoque -----------------------------
 DROP TABLE IF EXISTS `Movimentacoes_Estoque`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `Movimentacoes_Estoque` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `item_id` int(11) NOT NULL,
@@ -67,35 +63,25 @@ CREATE TABLE `Movimentacoes_Estoque` (
   PRIMARY KEY (`id`),
   KEY `item_id` (`item_id`),
   KEY `responsavel_id` (`responsavel_id`),
-  CONSTRAINT `1` FOREIGN KEY (`item_id`) REFERENCES `Itens` (`id`),
-  CONSTRAINT `2` FOREIGN KEY (`responsavel_id`) REFERENCES `Usuarios` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+  CONSTRAINT `fk_mov_item` FOREIGN KEY (`item_id`) REFERENCES `Itens` (`id`),
+  CONSTRAINT `fk_mov_responsavel` FOREIGN KEY (`responsavel_id`) REFERENCES `Usuarios` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
---
--- Dumping data for table `Movimentacoes_Estoque`
---
+INSERT INTO `Movimentacoes_Estoque` (item_id, tipo, quantidade, data_movimentacao, observacao, responsavel_id) VALUES
+(1,  'Entrada', 60, '2026-05-16 09:00:00', 'Entrada inicial de papel A4',          1),
+(1,  'Saída',   10, '2026-06-01 10:30:00', 'Distribuição para a secretaria',       1),
+(2,  'Entrada', 30, '2026-05-16 09:10:00', 'Compra de canetas',                    2),
+(2,  'Saída',   22, '2026-06-02 14:00:00', 'Distribuição para os setores',         1),
+(4,  'Entrada', 12, '2026-05-20 08:00:00', 'Reposição de material de limpeza',     2),
+(4,  'Saída',    9, '2026-06-05 11:15:00', 'Consumo semanal',                      2),
+(7,  'Entrada',  6, '2026-05-22 08:30:00', 'Compra de cartuchos de tinta',         1),
+(7,  'Saída',    4, '2026-06-08 16:00:00', 'Troca em impressoras',                 1),
+(10, 'Entrada', 10, '2026-05-25 07:45:00', 'Abastecimento de café da copa',        2),
+(10, 'Saída',    5, '2026-06-07 09:00:00', 'Consumo da copa',                      2);
 
-SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
-LOCK TABLES `Movimentacoes_Estoque` WRITE;
-/*!40000 ALTER TABLE `Movimentacoes_Estoque` DISABLE KEYS */;
-INSERT INTO `Movimentacoes_Estoque` VALUES
-(1,1,'Entrada',10,'2026-05-16 19:18:42','Entrada inicial de lote de pilotos para quadro branco',1),
-(2,2,'Entrada',3,'2026-05-16 19:21:41','Entrada inicial de vassouras',1),
-(3,2,'Entrada',10,'2025-03-20 14:30:00','Adição realizada utilizando a rota',2),
-(4,2,'Saída',5,'2025-03-20 14:30:00','Retirada realizada utilizando a rota',2);
-/*!40000 ALTER TABLE `Movimentacoes_Estoque` ENABLE KEYS */;
-UNLOCK TABLES;
-COMMIT;
-SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
-
---
--- Table structure for table `Solicitacoes_Materiais`
---
-
+-- --------------------- Solicitacoes_Materiais ------------------------------
+-- (Reservas estão fora do escopo do MVP; tabela criada mas mantida vazia.)
 DROP TABLE IF EXISTS `Solicitacoes_Materiais`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `Solicitacoes_Materiais` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `item_id` int(11) NOT NULL,
@@ -106,63 +92,8 @@ CREATE TABLE `Solicitacoes_Materiais` (
   PRIMARY KEY (`id`),
   KEY `item_id` (`item_id`),
   KEY `solicitante_id` (`solicitante_id`),
-  CONSTRAINT `1` FOREIGN KEY (`item_id`) REFERENCES `Itens` (`id`),
-  CONSTRAINT `2` FOREIGN KEY (`solicitante_id`) REFERENCES `Usuarios` (`id`)
+  CONSTRAINT `fk_sol_item` FOREIGN KEY (`item_id`) REFERENCES `Itens` (`id`),
+  CONSTRAINT `fk_sol_solicitante` FOREIGN KEY (`solicitante_id`) REFERENCES `Usuarios` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `Solicitacoes_Materiais`
---
-
-SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
-LOCK TABLES `Solicitacoes_Materiais` WRITE;
-/*!40000 ALTER TABLE `Solicitacoes_Materiais` DISABLE KEYS */;
-/*!40000 ALTER TABLE `Solicitacoes_Materiais` ENABLE KEYS */;
-UNLOCK TABLES;
-COMMIT;
-SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
-
---
--- Table structure for table `Usuarios`
---
-
-DROP TABLE IF EXISTS `Usuarios`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `Usuarios` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `nome` varchar(255) NOT NULL,
-  `email` varchar(255) NOT NULL,
-  `senha` varchar(255) NOT NULL,
-  `perfil` enum('Consultor','Operador') NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `Usuarios`
---
-
-SET @OLD_AUTOCOMMIT=@@AUTOCOMMIT, @@AUTOCOMMIT=0;
-LOCK TABLES `Usuarios` WRITE;
-/*!40000 ALTER TABLE `Usuarios` DISABLE KEYS */;
-INSERT INTO `Usuarios` VALUES
-(1,'Peri de Lima','peri@smartlocus.com','123456','Operador'),
-(2,'Leozinho Ruindade Pura','leozinho244@gmail.com','senha_super_segura123','Operador');
-/*!40000 ALTER TABLE `Usuarios` ENABLE KEYS */;
-UNLOCK TABLES;
-COMMIT;
-SET AUTOCOMMIT=@OLD_AUTOCOMMIT;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
-
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*M!100616 SET NOTE_VERBOSITY=@OLD_NOTE_VERBOSITY */;
-
--- Dump completed on 2026-06-10  2:10:47
+SET FOREIGN_KEY_CHECKS = 1;
